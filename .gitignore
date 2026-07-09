@@ -216,3 +216,14 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- synth_vlm_data: never commit generated data or sample images ---
+*.jsonl
+*.parquet
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.pdf
+smoke_images/
+**/img/
