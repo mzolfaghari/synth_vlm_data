@@ -1,13 +1,14 @@
 # synth_vlm_data
 
 Synthetic / augmented data-generation pipelines for vision-language model (VLM) SFT, built to
-enrich chart & document understanding (InfoVQA / ChartQA-style tasks). Three pipelines:
+enrich chart & document understanding (InfoVQA / ChartQA-style tasks). Four pipelines:
 
 | Dir | Pipeline | What it produces |
 |---|---|---|
 | [`chartgalaxy/`](chartgalaxy/) | **ChartGalaxy QA generation** — English, image-verified QA over real + synthetic chart infographics, generated *and* verified by a VLM (Qwen3.6-27B-FP8) in image mode. | `{config, image, question, answer, tier, rationale}` JSONL |
 | [`cosyn/`](cosyn/) | **CoSyn-400K** download + manifest builder for text-rich synthetic images (doc / table / nutrition / chart / diagram / graphic / math). | `{config, image, question, answer}` JSONL |
 | [`compact/`](compact/) | **COMPACT** compositional atomic-to-complex QA (arXiv:2504.21850) — samples `k` atomic capabilities/image and generates one question integrating exactly those `k`, then verifies. Upstream code + our Qwen-vLLM backend. Runs over CoSyn images. | LLaVA conversations → `{config, image, question, answer}` JSONL |
+| [`forge/`](forge/) | **FORGE** — fidelity-checked VQA: cheap deterministic grounding gates, then an *adversarial panel* (rigid advocate + lenient/strict judges must reach consensus) with dissent-driven refinement. Verifies existing QA or sits downstream of a generator. | fidelity-checked `{config, image, question, answer}` JSONL |
 
 ## chartgalaxy — the QA generator
 
@@ -37,6 +38,23 @@ converter to our manifest schema, and a SLURM runner that generates over **CoSyn
 - [`compact/README.md`](compact/README.md) — attribution, taxonomy, and how to run
 - [`compact/backends.py`](compact/backends.py) — Qwen-vLLM / Gemini client (our addition)
 - [`compact/run_compact_cosyn_8gpu.slurm`](compact/run_compact_cosyn_8gpu.slurm) — serve Qwen ×8 + generate k=1,2,3 over CoSyn + assemble manifest
+
+## forge — fidelity-checked VQA via adversarial adjudication
+
+![FORGE pipeline](forge/docs/forge_pipeline.png)
+
+FORGE upgrades answer verification from a single model pass to an **adversarial panel**: cheap
+deterministic grounding gates run first (answer format, numeric ±5% vs. source, ROUGE-L dedup), and
+only the ambiguous residual goes to a rigid **Advocate** + a **lenient (recall)** and a **strict
+(precision)** judge that must reach **consensus**; on dissent it refines the answer and re-adjudicates.
+Step ② can weight skill sampling by a **model weakness profile** to oversample weak capabilities. The
+adversarial-debate idea is adapted from [arXiv:2604.25203](https://arxiv.org/abs/2604.25203),
+retargeted to VQA answer-correctness.
+
+- [`forge/README.md`](forge/README.md) — attribution, stages, and how to run
+- [`forge/debate.py`](forge/debate.py) — asymmetric debate + refinement; `single_verify()` baseline
+- [`forge/forge_verify.py`](forge/forge_verify.py) — gates → panel orchestrator (resumable)
+- [`forge/run_forge_cosyn.slurm`](forge/run_forge_cosyn.slurm) — serve Qwen ×8 + verify CoSyn QA on a worker
 
 ## Notes
 

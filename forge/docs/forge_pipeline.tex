@@ -1,0 +1,121 @@
+\documentclass[border=12pt]{standalone}
+\usepackage{tikz}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{arrows.meta,positioning,backgrounds,calc,shapes.geometric}
+\begin{document}
+\definecolor{ta}{RGB}{60,90,200}
+\definecolor{tb}{RGB}{230,140,30}
+\definecolor{tc}{RGB}{25,160,150}
+\definecolor{td}{RGB}{200,60,70}
+\begin{tikzpicture}[
+  font=\sffamily,
+  bt/.style={font=\small\bfseries, anchor=west},
+  sub/.style={font=\scriptsize, text=black!62, align=center},
+  card/.style={draw=black!30, fill=white, rounded corners=3pt, line width=0.6pt, align=left, font=\scriptsize},
+  box/.style={draw, rounded corners=3.5pt, line width=0.7pt, align=center, font=\scriptsize},
+  jbox/.style={draw, rounded corners=3.5pt, line width=0.7pt, align=center, font=\tiny},
+  arr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=black!55},
+  garr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tc!55!black},
+  aarr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tb!60!black},
+  rarr/.style={-{Stealth[length=6pt]}, line width=1pt, color=td!75, dashed},
+  deb/.style={{Stealth[length=4.5pt]}-{Stealth[length=4.5pt]}, line width=0.8pt, color=black!55},
+]
+\newcommand{\imgicon}[2]{%
+  \draw[black!35,fill=white,line width=0.5pt] (#1,#2) rectangle ++(1.0,0.62);
+  \fill[ta!55] (#1+0.16,#2+0.10) rectangle ++(0.16,0.28);
+  \fill[tb!60] (#1+0.42,#2+0.10) rectangle ++(0.16,0.40);
+  \fill[tc!60] (#1+0.68,#2+0.10) rectangle ++(0.16,0.22);}
+\newcommand{\srccard}[2]{%
+  \draw[black!30,fill=black!3,line width=0.5pt] (#1,#2) rectangle ++(1.15,0.62);
+  \foreach \r in {0,1,2}{\foreach \c in {0,1,2}{
+     \fill[black!18] (#1+0.11+\c*0.34,#2+0.10+\r*0.16) rectangle ++(0.26,0.10);}}}
+\newcommand{\panel}[5]{\begin{scope}[on background layer]
+  \fill[#5,rounded corners=6pt] (#1,#2) rectangle (#3,#4);\end{scope}}
+
+% ===== title =====
+\node[font=\LARGE\bfseries,text=tb!55!black,anchor=west] at (0,9.35) {FORGE};
+\node[font=\small\itshape,text=black!62,anchor=west] at (0,8.88)
+  {Grounded compositional VQA synthesis, tempered by adversarial adjudication};
+
+% ===== separate WEAKNESS ANALYSIS module (feeds Compose) =====
+\begin{scope}[on background layer]\fill[td!6,rounded corners=6pt] (2.3,7.15) rectangle (5.1,8.45);\end{scope}
+\draw[td!45,rounded corners=6pt,line width=0.6pt] (2.3,7.15) rectangle (5.1,8.45);
+\node[font=\scriptsize\bfseries,text=td!60!black,anchor=west] at (2.42,8.24){Weakness analysis};
+\def\bx{2.55}\def\bby{7.42}
+\foreach \i/\h/\w/\lab in {0/0.20/0/col,1/0.50/1/cnt,2/0.15/0/txt,3/0.30/0/shp,4/0.56/1/pos,5/0.40/1/cmp}{
+  \pgfmathsetmacro\xx{\bx+\i*0.40}
+  \ifnum\w=1 \fill[tb!70] (\xx,\bby) rectangle ++(0.26,\h);
+  \else \fill[ta!45] (\xx,\bby) rectangle ++(0.26,\h);\fi
+  \node[font=\tiny,text=black!60] at (\xx+0.13,\bby-0.14){\lab};}
+\draw[black!40,line width=0.5pt] (\bx-0.05,\bby) -- (\bx+2.35,\bby);
+
+% ===== main pipeline panels =====
+\panel{0.0}{0.5}{1.8}{6.9}{ta!6}
+\panel{2.3}{0.5}{5.1}{6.9}{ta!8}
+\panel{5.6}{0.5}{7.8}{6.9}{tb!8}
+\panel{8.3}{0.5}{13.3}{6.9}{tb!5}
+\panel{13.8}{0.5}{15.9}{6.9}{tc!8}
+\node[bt,text=ta!45!black] at (0.06,6.62){\textcircled{1} Input};
+\node[bt,text=ta!45!black] at (2.36,6.62){\textcircled{2} Compose};
+\node[bt,text=tb!50!black] at (5.66,6.62){\textcircled{3} Gates};
+\node[bt,text=td!55!black] at (8.36,6.62){\textcircled{4} Adjudicate};
+\node[bt,text=tc!45!black] at (13.86,6.62){\textcircled{5} Output};
+
+% weakness module -> compose (down arrow: biases the skill sampling)
+\draw[-{Stealth[length=6pt]},line width=1.1pt,color=td!70] (3.7,7.15) -- (3.7,6.9);
+
+% ---- (1) Input ----
+\imgicon{0.40}{4.95}
+\node[font=\Large,text=black!45] at (0.90,4.55){$+$};
+\srccard{0.32}{3.55}
+\node[sub,text width=1.7cm] at (0.90,2.4){rendered image {\bf +} structured source $=$ free ground truth};
+
+% ---- (2) Compose ----
+\node[sub,text width=2.5cm] at (3.7,5.75){sample $k$ skills, \textbf{weighted by weakness}};
+\node[box,fill=ta!14,draw=ta!60!black,minimum width=2.5cm,minimum height=0.7cm] (gen) at (3.7,4.35){\textbf{Generator}\\ $Q$ + candidate $A$};
+\node[card,text width=2.4cm] (qa) at (3.7,2.75){\textbf{Q}: largest segment's colour?\\ \textbf{A}: blue (34\%)};
+\draw[arr,line width=0.9pt] (3.7,5.32) -- (gen.north);
+\draw[arr,line width=0.9pt] (gen.south) -- (qa.north);
+
+% ---- (3) Gates ----
+\foreach \i/\g in {0/{answer format},1/{numeric $\pm5\%$},2/{ROUGE-L dedup},3/{skill balance}}{
+  \pgfmathsetmacro\gy{5.55-\i*0.62}
+  \node[box,fill=tb!12,draw=tb!55!black,minimum width=1.9cm,minimum height=0.46cm,font=\tiny] at (6.7,\gy){\g};}
+\node[font=\scriptsize,text=tc!45!black] at (6.7,2.78){\textbf{clears} $\Rightarrow$ accept};
+\node[font=\scriptsize,text=td!70] at (6.7,2.34){\textbf{ambiguous} $\Rightarrow$ panel};
+
+% ---- (4) Adjudicate ----
+\node[font=\tiny\itshape,text=black!60,align=center,text width=4.6cm] at (10.8,6.18){keep the pair only if the panel reaches consensus};
+\node[box,fill=tb!14,draw=tb!60!black,minimum width=1.5cm,minimum height=0.9cm] (adv) at (9.30,4.55){\textbf{Advocate}\\ defends $A$\\ (rigid)};
+\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.7cm,minimum height=0.6cm] (jr) at (11.10,5.25){\textbf{Judge: lenient}\\ (recall)};
+\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.7cm,minimum height=0.6cm] (jp) at (11.10,3.85){\textbf{Judge: strict}\\ (precision)};
+\draw[deb] (adv.north east) to[bend left=10] (jr.west);
+\draw[deb] (adv.south east) to[bend right=10] (jp.west);
+\node[font=\tiny,text=black!55,align=center] at (11.10,4.55){debate\\ $T$ rounds};
+\node[diamond,aspect=1.4,draw=black!55,fill=black!4,line width=0.6pt,font=\tiny,align=center,inner sep=0.5pt] (cons) at (12.60,4.55){panel\\ agrees?};
+\node[box,fill=td!7,draw=td!55,minimum width=1.4cm,minimum height=0.52cm] (obj) at (12.60,2.85){\textbf{objections}};
+\draw[arr,line width=0.9pt] (jr.east) -| (cons.north);
+\draw[arr,line width=0.9pt] (jp.east) -| (cons.south);
+\draw[rarr,line width=0.9pt] (cons.south) -- node[right,font=\tiny,text=td!70,pos=0.4]{no} (obj.north);
+
+% ---- (5) Output ----
+\node[cylinder,shape border rotate=90,aspect=0.3,draw=tc!55!black,fill=tc!12,line width=0.7pt,
+      minimum width=1.7cm,minimum height=1.2cm,align=center,font=\tiny] (db) at (14.85,4.45){\{config, image,\\ question, answer\}};
+\node[box,fill=black!5,draw=black!45,minimum width=1.6cm,minimum height=0.55cm] (sft) at (14.85,2.55){\textbf{VLM SFT}};
+\draw[garr,line width=0.9pt] (db.south) -- (sft.north);
+\node[sub,text width=1.5cm] at (14.80,1.68){fidelity-checked corpus};
+
+% ===== inter-stage flow =====
+\draw[arr] (1.8,4.35) -- (2.3,4.35);
+\draw[arr] (5.1,3.6) -- (5.6,3.6);
+\draw[aarr] (7.8,4.55) -- node[above,font=\tiny,text=tb!60!black,pos=0.4]{ambiguous} (adv.west);
+\draw[garr] (cons.east) -- node[above,font=\tiny,text=tc!45!black]{yes~\checkmark} (db.west);
+% green "clears" bypass under the panels: gates -> output cylinder (enter from the right)
+\draw[garr] (6.7,2.60) -- (6.7,0.05) -- (15.75,0.05) -- (db.east);
+\node[font=\tiny,text=tc!45!black] at (10.5,0.24){clears $\Rightarrow$ accept};
+% red refine loop below everything: objections -> generator
+\draw[rarr] (obj.south) -- (12.60,-0.35) -- (3.7,-0.35) -- (gen.south);
+\node[font=\tiny,text=td!70] at (7.4,-0.15){objections $\rightarrow$ regenerate ($\le R_{\max}$)};
+\end{tikzpicture}
+\end{document}

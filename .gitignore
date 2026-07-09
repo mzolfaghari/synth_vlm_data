@@ -227,3 +227,7 @@ __marimo__/
 *.pdf
 smoke_images/
 **/img/
+
+# --- keep the FORGE pipeline figure (overrides the *.pdf/*.png ignores above) ---
+!forge/docs/forge_pipeline.pdf
+!forge/docs/forge_pipeline.png
