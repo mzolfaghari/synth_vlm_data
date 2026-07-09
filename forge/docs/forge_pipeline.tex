@@ -2,6 +2,7 @@
 \usepackage{tikz}
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage{pifont}
 \usetikzlibrary{arrows.meta,positioning,backgrounds,calc,shapes.geometric}
 \begin{document}
 \definecolor{ta}{RGB}{60,90,200}
@@ -16,8 +17,8 @@
   box/.style={draw, rounded corners=3.5pt, line width=0.7pt, align=center, font=\scriptsize},
   jbox/.style={draw, rounded corners=3.5pt, line width=0.7pt, align=center, font=\tiny},
   arr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=black!55},
-  garr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tc!55!black},
-  aarr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tb!60!black},
+  garr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tc!60!black},
+  aarr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tb!65!black},
   rarr/.style={-{Stealth[length=6pt]}, line width=1pt, color=td!75, dashed},
   deb/.style={{Stealth[length=4.5pt]}-{Stealth[length=4.5pt]}, line width=0.8pt, color=black!55},
 ]
@@ -32,22 +33,36 @@
      \fill[black!18] (#1+0.11+\c*0.34,#2+0.10+\r*0.16) rectangle ++(0.26,0.10);}}}
 \newcommand{\panel}[5]{\begin{scope}[on background layer]
   \fill[#5,rounded corners=6pt] (#1,#2) rectangle (#3,#4);\end{scope}}
+\newcommand{\bin}[2]{% tiny discard bin at x,y (0.34 x 0.34)
+  \draw[td!60,line width=0.6pt] (#1,#2) -- (#1,#2-0.30) -- (#1+0.32,#2-0.30) -- (#1+0.32,#2);
+  \draw[td!60,line width=0.6pt] (#1-0.05,#2) -- (#1+0.37,#2);
+  \foreach \k in {0.09,0.16,0.23}{\draw[td!60,line width=0.4pt] (#1+\k,#2-0.05)--(#1+\k,#2-0.24);}}
 
 % ===== title =====
 \node[font=\LARGE\bfseries,text=tb!55!black,anchor=west] at (0,9.35) {FORGE};
 \node[font=\small\itshape,text=black!62,anchor=west] at (0,8.88)
   {Grounded compositional VQA synthesis, tempered by adversarial adjudication};
 
+% ===== legend (top-right, above the subtitle) =====
+\begin{scope}[on background layer]\fill[black!4,rounded corners=5pt] (10.25,8.98) rectangle (15.95,9.96);\end{scope}
+\draw[black!25,rounded corners=5pt,line width=0.5pt] (10.25,8.98) rectangle (15.95,9.96);
+\node[font=\scriptsize\bfseries,text=black!65,anchor=west] at (10.42,9.78){Legend};
+\draw[arr,line width=1pt] (10.55,9.48)--(11.0,9.48); \node[font=\tiny,anchor=west,text=black!70] at (11.05,9.48){main flow};
+\draw[aarr,line width=1pt] (10.55,9.16)--(11.0,9.16); \node[font=\tiny,anchor=west,text=black!70] at (11.05,9.16){to panel};
+\draw[garr,line width=1pt] (13.05,9.48)--(13.5,9.48); \node[font=\tiny,anchor=west,text=black!70] at (13.55,9.48){accepted $\to$ corpus};
+\draw[rarr,line width=1pt] (13.05,9.16)--(13.5,9.16); \node[font=\tiny,anchor=west,text=black!70] at (13.55,9.16){rejected / refine};
+
 % ===== separate WEAKNESS ANALYSIS module (feeds Compose) =====
-\begin{scope}[on background layer]\fill[td!6,rounded corners=6pt] (2.3,7.15) rectangle (5.1,8.45);\end{scope}
-\draw[td!45,rounded corners=6pt,line width=0.6pt] (2.3,7.15) rectangle (5.1,8.45);
-\node[font=\scriptsize\bfseries,text=td!60!black,anchor=west] at (2.42,8.24){Weakness analysis};
-\def\bx{2.55}\def\bby{7.42}
-\foreach \i/\h/\w/\lab in {0/0.20/0/col,1/0.50/1/cnt,2/0.15/0/txt,3/0.30/0/shp,4/0.56/1/pos,5/0.40/1/cmp}{
+\begin{scope}[on background layer]\fill[td!6,rounded corners=6pt] (2.3,7.10) rectangle (5.1,8.55);\end{scope}
+\draw[td!45,rounded corners=6pt,line width=0.6pt] (2.3,7.10) rectangle (5.1,8.55);
+\node[font=\scriptsize\bfseries,text=td!60!black,anchor=west] at (2.42,8.35){Weakness analysis};
+\node[font=\tiny,text=black!55,anchor=west] at (2.42,8.06){bar $=$ error rate (\textcolor{tb!70!black}{orange $=$ weak})};
+\def\bx{2.55}\def\bby{7.46}
+\foreach \i/\h/\w/\lab in {0/0.15/0/col,1/0.38/1/cnt,2/0.11/0/txt,3/0.23/0/shp,4/0.42/1/pos,5/0.30/1/cmp}{
   \pgfmathsetmacro\xx{\bx+\i*0.40}
   \ifnum\w=1 \fill[tb!70] (\xx,\bby) rectangle ++(0.26,\h);
   \else \fill[ta!45] (\xx,\bby) rectangle ++(0.26,\h);\fi
-  \node[font=\tiny,text=black!60] at (\xx+0.13,\bby-0.14){\lab};}
+  \node[font=\tiny,text=black!60] at (\xx+0.13,\bby-0.13){\lab};}
 \draw[black!40,line width=0.5pt] (\bx-0.05,\bby) -- (\bx+2.35,\bby);
 
 % ===== main pipeline panels =====
@@ -62,8 +77,8 @@
 \node[bt,text=td!55!black] at (8.36,6.62){\textcircled{4} Adjudicate};
 \node[bt,text=tc!45!black] at (13.86,6.62){\textcircled{5} Output};
 
-% weakness module -> compose (down arrow: biases the skill sampling)
-\draw[-{Stealth[length=6pt]},line width=1.1pt,color=td!70] (3.7,7.15) -- (3.7,6.9);
+% weakness -> compose
+\draw[-{Stealth[length=6pt]},line width=1.1pt,color=td!70] (3.7,7.10) -- (3.7,6.9);
 
 % ---- (1) Input ----
 \imgicon{0.40}{4.95}
@@ -78,12 +93,15 @@
 \draw[arr,line width=0.9pt] (3.7,5.32) -- (gen.north);
 \draw[arr,line width=0.9pt] (gen.south) -- (qa.north);
 
-% ---- (3) Gates ----
+% ---- (3) Gates : three outcomes ----
 \foreach \i/\g in {0/{answer format},1/{numeric $\pm5\%$},2/{ROUGE-L dedup},3/{skill balance}}{
-  \pgfmathsetmacro\gy{5.55-\i*0.62}
-  \node[box,fill=tb!12,draw=tb!55!black,minimum width=1.9cm,minimum height=0.46cm,font=\tiny] at (6.7,\gy){\g};}
-\node[font=\scriptsize,text=tc!45!black] at (6.7,2.78){\textbf{clears} $\Rightarrow$ accept};
-\node[font=\scriptsize,text=td!70] at (6.7,2.34){\textbf{ambiguous} $\Rightarrow$ panel};
+  \pgfmathsetmacro\gy{5.65-\i*0.60}
+  \node[box,fill=tb!12,draw=tb!55!black,minimum width=1.9cm,minimum height=0.44cm,font=\tiny] at (6.7,\gy){\g};}
+\node[font=\tiny,text=black!55] at (6.7,2.98){\textit{three outcomes:}};
+\node[font=\scriptsize,text=tc!50!black] at (6.7,2.62){\checkmark~\textbf{clears} $\to$ accept};
+\node[font=\scriptsize,text=tb!65!black] at (6.7,2.20){\textbf{?}~\textbf{ambiguous} $\to$ panel};
+\node[font=\scriptsize,text=td!70] at (6.7,1.78){\ding{55}~\textbf{fails} $\to$ drop};
+\bin{6.35}{1.42}
 
 % ---- (4) Adjudicate ----
 \node[font=\tiny\itshape,text=black!60,align=center,text width=4.6cm] at (10.8,6.18){keep the pair only if the panel reaches consensus};
@@ -94,7 +112,7 @@
 \draw[deb] (adv.south east) to[bend right=10] (jp.west);
 \node[font=\tiny,text=black!55,align=center] at (11.10,4.55){debate\\ $T$ rounds};
 \node[diamond,aspect=1.4,draw=black!55,fill=black!4,line width=0.6pt,font=\tiny,align=center,inner sep=0.5pt] (cons) at (12.60,4.55){panel\\ agrees?};
-\node[box,fill=td!7,draw=td!55,minimum width=1.4cm,minimum height=0.52cm] (obj) at (12.60,2.85){\textbf{objections}};
+\node[box,fill=td!7,draw=td!55,minimum width=1.4cm,minimum height=0.52cm] (obj) at (12.60,2.9){\textbf{objections}};
 \draw[arr,line width=0.9pt] (jr.east) -| (cons.north);
 \draw[arr,line width=0.9pt] (jp.east) -| (cons.south);
 \draw[rarr,line width=0.9pt] (cons.south) -- node[right,font=\tiny,text=td!70,pos=0.4]{no} (obj.north);
@@ -109,13 +127,13 @@
 % ===== inter-stage flow =====
 \draw[arr] (1.8,4.35) -- (2.3,4.35);
 \draw[arr] (5.1,3.6) -- (5.6,3.6);
-\draw[aarr] (7.8,4.55) -- node[above,font=\tiny,text=tb!60!black,pos=0.4]{ambiguous} (adv.west);
-\draw[garr] (cons.east) -- node[above,font=\tiny,text=tc!45!black]{yes~\checkmark} (db.west);
-% green "clears" bypass under the panels: gates -> output cylinder (enter from the right)
-\draw[garr] (6.7,2.60) -- (6.7,0.05) -- (15.75,0.05) -- (db.east);
-\node[font=\tiny,text=tc!45!black] at (10.5,0.24){clears $\Rightarrow$ accept};
-% red refine loop below everything: objections -> generator
+\draw[aarr] (7.8,4.55) -- (adv.west);
+\draw[garr] (cons.east) -- node[above,font=\tiny,text=tc!50!black]{yes~\checkmark} (db.west);
+% gate-cleared accept: bypasses the panel, straight to the corpus (enter cylinder from the right)
+\draw[garr] (6.7,2.42) -- (6.7,0.05) -- (15.75,0.05) -- (db.east);
+\node[font=\tiny,text=tc!50!black] at (10.5,0.24){gate-cleared accept (skips panel)};
+% refine loop: objections -> generator; discarded after R_max
 \draw[rarr] (obj.south) -- (12.60,-0.35) -- (3.7,-0.35) -- (gen.south);
-\node[font=\tiny,text=td!70] at (7.4,-0.15){objections $\rightarrow$ regenerate ($\le R_{\max}$)};
+\node[font=\tiny,text=td!70] at (7.9,-0.15){objections $\rightarrow$ regenerate ($\le R_{\max}$), else drop};
 \end{tikzpicture}
 \end{document}
