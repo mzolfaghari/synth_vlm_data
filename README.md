@@ -1,12 +1,13 @@
 # synth_vlm_data
 
 Synthetic / augmented data-generation pipelines for vision-language model (VLM) SFT, built to
-enrich chart & document understanding (InfoVQA / ChartQA-style tasks). Two pipelines:
+enrich chart & document understanding (InfoVQA / ChartQA-style tasks). Three pipelines:
 
 | Dir | Pipeline | What it produces |
 |---|---|---|
 | [`chartgalaxy/`](chartgalaxy/) | **ChartGalaxy QA generation** — English, image-verified QA over real + synthetic chart infographics, generated *and* verified by a VLM (Qwen3.6-27B-FP8) in image mode. | `{config, image, question, answer, tier, rationale}` JSONL |
 | [`cosyn/`](cosyn/) | **CoSyn-400K** download + manifest builder for text-rich synthetic images (doc / table / nutrition / chart / diagram / graphic / math). | `{config, image, question, answer}` JSONL |
+| [`compact/`](compact/) | **COMPACT** compositional atomic-to-complex QA (arXiv:2504.21850) — samples `k` atomic capabilities/image and generates one question integrating exactly those `k`, then verifies. Upstream code + our Qwen-vLLM backend. Runs over CoSyn images. | LLaVA conversations → `{config, image, question, answer}` JSONL |
 
 ## chartgalaxy — the QA generator
 
@@ -24,6 +25,18 @@ numeric groundedness (±5% vs the chart's data table), ROUGE-L dedup, and per-ti
 
 - [`cosyn/download.py`](cosyn/download.py) — pull CoSyn-400K configs and materialize images
 - [`cosyn/build_final.py`](cosyn/build_final.py) — normalize into a training manifest (3 QA/image cap)
+
+## compact — compositional capability tuning
+
+A faithful integration of **COMPACT** (Yang et al., [arXiv:2504.21850](https://arxiv.org/abs/2504.21850),
+[princetonvisualai/compact](https://github.com/princetonvisualai/compact)). Core files are copied
+verbatim from upstream; we add a pluggable backend so it runs on our self-hosted **Qwen (vLLM,
+OpenAI-compatible)** with no external API key (Gemini still available via `--backend gemini`), a
+converter to our manifest schema, and a SLURM runner that generates over **CoSyn** images.
+
+- [`compact/README.md`](compact/README.md) — attribution, taxonomy, and how to run
+- [`compact/backends.py`](compact/backends.py) — Qwen-vLLM / Gemini client (our addition)
+- [`compact/run_compact_cosyn_8gpu.slurm`](compact/run_compact_cosyn_8gpu.slurm) — serve Qwen ×8 + generate k=1,2,3 over CoSyn + assemble manifest
 
 ## Notes
 
