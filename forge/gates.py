@@ -1,13 +1,14 @@
-"""Cheap deterministic grounding gates — the first, no-LLM filter (Stage 3 of FORGE).
+"""Cheap sanity filters — the first, no-LLM stage (Stage 3 of FORGE).
 
-Resolve the easy, checkable cases up front so the expensive adversarial panel only runs on the
-ambiguous residual. Helpers are ported from chartgalaxy/gen_qa.py (answer-format guard, numeric
-±5% groundedness vs the image's structured source, ROUGE-L dedup).
+These gates only DROP obviously-bad candidates (not a single-value answer, or a near-duplicate of
+one already kept for the image). They do NOT judge correctness — every surviving pair goes to the
+adversarial panel (Stage 4), which is the sole arbiter of correctness. Helpers are ported from
+chartgalaxy/gen_qa.py (answer-format guard, ROUGE-L dedup, and numeric ±5% groundedness which is
+still used by the panel's refinement step to sanity-check corrected answers).
 
 `triage()` returns one of:
-  ("accept",     reason)  -> high-confidence correct (e.g. numeric answer matches source ±5%) -> keep
-  ("drop",       reason)  -> definitely bad (format / near-duplicate)                          -> discard
-  ("adjudicate", reason)  -> can't be settled cheaply (reasoning / unmatched)  -> send to the panel
+  ("drop",       reason)   -> junk (bad format / near-duplicate)      -> discard
+  ("adjudicate", "passes") -> everything else                         -> send to the panel
 """
 import re, json
 
@@ -90,16 +91,12 @@ def rouge_l(x, y):
     return 2 * p * r / (p + r)
 
 
-def triage(question, answer, snums, kept_questions, dedup_thresh=0.7):
-    """Cheap decision before spending any LLM calls. `snums` = source_numbers(...) or []."""
+def triage(question, answer, kept_questions, dedup_thresh=0.7):
+    """Cheap sanity filters, no LLM. Drop junk; send everything else to the panel — the panel
+    (not the gates) decides correctness. Returns ('drop', reason) or ('adjudicate', 'passes')."""
     a = norm_answer(answer)
     if not ok_answer(a):
-        return ("drop", "bad_format")
+        return ("drop", "bad_format")           # not a single short value (list/sentence)
     if any(rouge_l(question, kq) >= dedup_thresh for kq in kept_questions):
         return ("drop", "near_duplicate")
-    v = parse_num(a)
-    if v is not None and snums:
-        if grounded_numeric(a, snums):
-            return ("accept", "numeric_grounded")     # clears -> accept (bypass panel)
-        return ("adjudicate", "numeric_unmatched")    # suspicious number -> panel
-    return ("adjudicate", "needs_judgement")           # non-numeric / reasoning -> panel
+    return ("adjudicate", "passes")

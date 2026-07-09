@@ -2,9 +2,10 @@
 
 FORGE turns a QA set over programmatically **rendered** images (charts / docs / tables — e.g.
 CoSyn) into a **fidelity-checked** training manifest. Its distinctive stage is an *adversarial
-panel*: a rigid Advocate defends each answer while two judges with opposite biases (recall vs.
-precision) independently decide by looking at the image, and a pair is kept only on **consensus**.
-Cheap deterministic gates run first, so the expensive panel only sees the ambiguous residual.
+panel*: a rigid Advocate defends each answer while a **lenient** judge (accepts if roughly right)
+and a **strict** judge (accepts only if exact) independently decide by looking at the image, and a
+pair is kept only when **both agree**. Cheap sanity gates run first, but only to drop junk — every
+surviving pair is verified by the panel.
 
 ![pipeline](docs/forge_pipeline.png)  <!-- source: docs/forge_pipeline.tex · vector: docs/forge_pipeline.pdf -->
 
@@ -27,20 +28,21 @@ not the generator.)
    sampling `k` skills **weighted by the model's weakness profile** (from benchmark weakness
    analysis), so we oversample the skills the model is worst at (e.g. `../compact`). FORGE can
    also just verify an existing QA set.
-3. **Grounding gates** (`gates.py`, no LLM) — answer-format, numeric ±5% vs. source, ROUGE-L
-   dedup. Easy cases **clear → accept**; the rest → panel.
-4. **Adjudicate** (`debate.py`) — rigid Advocate + recall-judge + precision-judge, up to `T`
-   rounds; **consensus → accept**; **dissent → refine `A` and re-adjudicate ≤ `R_max`, else drop**.
+3. **Gates** (`gates.py`, no LLM) — cheap sanity filters that only **drop junk** (not a single-value
+   answer / a near-duplicate). They do **not** judge correctness — every survivor goes to the panel.
+4. **Adjudicate** (`debate.py`) — a rigid Advocate + a **lenient** judge (accepts if roughly right)
+   and a **strict** judge (accepts only if exact) debate up to `T` rounds; **both agree → accept**;
+   **disagree → refine `A` and re-adjudicate ≤ `R_max`, else drop**.
 5. **Assemble** — `{config, image, question, answer}` (+ `tier`), ready for `finetune_mixed.py --mixed`.
 
 ## Files
 
 | File | Purpose |
 |---|---|
-| `gates.py` | deterministic grounding gates + `triage()` (accept / drop / adjudicate) |
-| `prompts.py` | advocate + recall/precision judge + single-judge prompts (VQA correctness) |
+| `gates.py` | cheap sanity filters + `triage()` (drop junk / send to panel) |
+| `prompts.py` | advocate + lenient/strict judge + single-judge prompts (VQA correctness) |
 | `debate.py` | `adjudicate()` (asymmetric debate + refinement) and `single_verify()` (baseline) |
-| `forge_verify.py` | orchestrator CLI: gates → panel over the residual, grouped per image, resumable |
+| `forge_verify.py` | orchestrator CLI: gates drop junk → panel verifies every survivor, per image, resumable |
 | `llm.py` | OpenAI-compatible chat helper for our Qwen vLLM endpoint |
 | `run_forge_cosyn.slurm` | serve Qwen ×8 + run FORGE over CoSyn QA on a worker |
 | `docs/forge_pipeline.tex` | the figure above (TikZ source) |

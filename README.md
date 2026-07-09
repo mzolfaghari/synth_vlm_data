@@ -8,7 +8,7 @@ enrich chart & document understanding (InfoVQA / ChartQA-style tasks). Four pipe
 | [`chartgalaxy/`](chartgalaxy/) | **ChartGalaxy QA generation** — English, image-verified QA over real + synthetic chart infographics, generated *and* verified by a VLM (Qwen3.6-27B-FP8) in image mode. | `{config, image, question, answer, tier, rationale}` JSONL |
 | [`cosyn/`](cosyn/) | **CoSyn-400K** download + manifest builder for text-rich synthetic images (doc / table / nutrition / chart / diagram / graphic / math). | `{config, image, question, answer}` JSONL |
 | [`compact/`](compact/) | **COMPACT** compositional atomic-to-complex QA (arXiv:2504.21850) — samples `k` atomic capabilities/image and generates one question integrating exactly those `k`, then verifies. Upstream code + our Qwen-vLLM backend. Runs over CoSyn images. | LLaVA conversations → `{config, image, question, answer}` JSONL |
-| [`forge/`](forge/) | **FORGE** — fidelity-checked VQA: cheap deterministic grounding gates, then an *adversarial panel* (rigid advocate + lenient/strict judges must reach consensus) with dissent-driven refinement. Verifies existing QA or sits downstream of a generator. | fidelity-checked `{config, image, question, answer}` JSONL |
+| [`forge/`](forge/) | **FORGE** — fidelity-checked VQA: cheap sanity gates drop junk, then an *adversarial panel* verifies **every** survivor (rigid advocate + lenient & strict judges must both agree) with dissent-driven refinement. Verifies existing QA or sits downstream of a generator. | fidelity-checked `{config, image, question, answer}` JSONL |
 
 ## chartgalaxy — the QA generator
 

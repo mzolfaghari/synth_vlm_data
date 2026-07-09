@@ -18,7 +18,6 @@
   jbox/.style={draw, rounded corners=3.5pt, line width=0.7pt, align=center, font=\tiny},
   arr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=black!55},
   garr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tc!60!black},
-  aarr/.style={-{Stealth[length=6pt]}, line width=1.2pt, color=tb!65!black},
   rarr/.style={-{Stealth[length=6pt]}, line width=1pt, color=td!75, dashed},
   deb/.style={{Stealth[length=4.5pt]}-{Stealth[length=4.5pt]}, line width=0.8pt, color=black!55},
 ]
@@ -33,10 +32,10 @@
      \fill[black!18] (#1+0.11+\c*0.34,#2+0.10+\r*0.16) rectangle ++(0.26,0.10);}}}
 \newcommand{\panel}[5]{\begin{scope}[on background layer]
   \fill[#5,rounded corners=6pt] (#1,#2) rectangle (#3,#4);\end{scope}}
-\newcommand{\bin}[2]{% tiny discard bin at x,y (0.34 x 0.34)
-  \draw[td!60,line width=0.6pt] (#1,#2) -- (#1,#2-0.30) -- (#1+0.32,#2-0.30) -- (#1+0.32,#2);
-  \draw[td!60,line width=0.6pt] (#1-0.05,#2) -- (#1+0.37,#2);
-  \foreach \k in {0.09,0.16,0.23}{\draw[td!60,line width=0.4pt] (#1+\k,#2-0.05)--(#1+\k,#2-0.24);}}
+\newcommand{\bin}[2]{% tiny discard bin, top-left at x,y
+  \draw[td!60,line width=0.6pt] (#1,#2) -- (#1,#2-0.28) -- (#1+0.30,#2-0.28) -- (#1+0.30,#2);
+  \draw[td!60,line width=0.6pt] (#1-0.05,#2) -- (#1+0.35,#2);
+  \foreach \k in {0.08,0.15,0.22}{\draw[td!60,line width=0.4pt] (#1+\k,#2-0.04)--(#1+\k,#2-0.23);}}
 
 % ===== title =====
 \node[font=\LARGE\bfseries,text=tb!55!black,anchor=west] at (0,9.35) {FORGE};
@@ -44,13 +43,12 @@
   {Grounded compositional VQA synthesis, tempered by adversarial adjudication};
 
 % ===== legend (top-right, above the subtitle) =====
-\begin{scope}[on background layer]\fill[black!4,rounded corners=5pt] (10.25,8.98) rectangle (15.95,9.96);\end{scope}
-\draw[black!25,rounded corners=5pt,line width=0.5pt] (10.25,8.98) rectangle (15.95,9.96);
-\node[font=\scriptsize\bfseries,text=black!65,anchor=west] at (10.42,9.78){Legend};
-\draw[arr,line width=1pt] (10.55,9.48)--(11.0,9.48); \node[font=\tiny,anchor=west,text=black!70] at (11.05,9.48){main flow};
-\draw[aarr,line width=1pt] (10.55,9.16)--(11.0,9.16); \node[font=\tiny,anchor=west,text=black!70] at (11.05,9.16){to panel};
-\draw[garr,line width=1pt] (13.05,9.48)--(13.5,9.48); \node[font=\tiny,anchor=west,text=black!70] at (13.55,9.48){accepted $\to$ corpus};
-\draw[rarr,line width=1pt] (13.05,9.16)--(13.5,9.16); \node[font=\tiny,anchor=west,text=black!70] at (13.55,9.16){rejected / refine};
+\begin{scope}[on background layer]\fill[black!4,rounded corners=5pt] (10.7,8.98) rectangle (15.95,9.96);\end{scope}
+\draw[black!25,rounded corners=5pt,line width=0.5pt] (10.7,8.98) rectangle (15.95,9.96);
+\node[font=\scriptsize\bfseries,text=black!65,anchor=west] at (10.85,9.78){Legend};
+\draw[arr,line width=1pt] (10.95,9.46)--(11.4,9.46);  \node[font=\tiny,anchor=west,text=black!70] at (11.45,9.46){main flow};
+\draw[garr,line width=1pt] (13.35,9.46)--(13.8,9.46); \node[font=\tiny,anchor=west,text=black!70] at (13.85,9.46){accepted};
+\draw[rarr,line width=1pt] (10.95,9.16)--(11.4,9.16); \node[font=\tiny,anchor=west,text=black!70] at (11.45,9.16){dropped / refine};
 
 % ===== separate WEAKNESS ANALYSIS module (feeds Compose) =====
 \begin{scope}[on background layer]\fill[td!6,rounded corners=6pt] (2.3,7.10) rectangle (5.1,8.55);\end{scope}
@@ -93,26 +91,26 @@
 \draw[arr,line width=0.9pt] (3.7,5.32) -- (gen.north);
 \draw[arr,line width=0.9pt] (gen.south) -- (qa.north);
 
-% ---- (3) Gates : three outcomes ----
-\foreach \i/\g in {0/{answer format},1/{numeric $\pm5\%$},2/{ROUGE-L dedup},3/{skill balance}}{
-  \pgfmathsetmacro\gy{5.65-\i*0.60}
-  \node[box,fill=tb!12,draw=tb!55!black,minimum width=1.9cm,minimum height=0.44cm,font=\tiny] at (6.7,\gy){\g};}
-\node[font=\tiny,text=black!55] at (6.7,2.98){\textit{three outcomes:}};
-\node[font=\scriptsize,text=tc!50!black] at (6.7,2.62){\checkmark~\textbf{clears} $\to$ accept};
-\node[font=\scriptsize,text=tb!65!black] at (6.7,2.20){\textbf{?}~\textbf{ambiguous} $\to$ panel};
-\node[font=\scriptsize,text=td!70] at (6.7,1.78){\ding{55}~\textbf{fails} $\to$ drop};
-\bin{6.35}{1.42}
+% ---- (3) Gates : cheap sanity filters — drop junk, everything else -> panel ----
+\foreach \i/\g in {0/{single-value answer},1/{no list / sentence},2/{near-duplicate (dedup)}}{
+  \pgfmathsetmacro\gy{5.55-\i*0.62}
+  \node[box,fill=tb!12,draw=tb!55!black,minimum width=2.0cm,minimum height=0.46cm,font=\tiny] at (6.7,\gy){\g};}
+\node[font=\tiny\itshape,text=black!58] at (6.7,3.55){cheap sanity checks};
+\draw[rarr,line width=0.9pt] (6.7,3.25) -- (6.7,2.72);
+\bin{6.55}{2.68}
+\node[font=\scriptsize,text=td!70] at (6.7,2.12){\ding{55}~\textbf{junk} $\to$ drop};
+\node[font=\scriptsize,text=black!70,align=center,text width=2.1cm] at (6.7,1.35){everything else\\ $\to$ adjudicate};
 
-% ---- (4) Adjudicate ----
-\node[font=\tiny\itshape,text=black!60,align=center,text width=4.6cm] at (10.8,6.18){keep the pair only if the panel reaches consensus};
+% ---- (4) Adjudicate : verify EVERY surviving pair ----
+\node[font=\tiny\itshape,text=black!60,align=center,text width=4.6cm] at (10.8,6.18){keep the pair only if both judges agree it is correct};
 \node[box,fill=tb!14,draw=tb!60!black,minimum width=1.5cm,minimum height=0.9cm] (adv) at (9.30,4.55){\textbf{Advocate}\\ defends $A$\\ (rigid)};
-\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.7cm,minimum height=0.6cm] (jr) at (11.10,5.25){\textbf{Judge: lenient}\\ (recall)};
-\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.7cm,minimum height=0.6cm] (jp) at (11.10,3.85){\textbf{Judge: strict}\\ (precision)};
+\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.9cm,minimum height=0.66cm] (jr) at (11.15,5.25){\textbf{Lenient judge}\\ (accepts if roughly right)};
+\node[jbox,fill=ta!10,draw=ta!60!black,minimum width=1.9cm,minimum height=0.66cm] (jp) at (11.15,3.85){\textbf{Strict judge}\\ (accepts only if exact)};
 \draw[deb] (adv.north east) to[bend left=10] (jr.west);
 \draw[deb] (adv.south east) to[bend right=10] (jp.west);
-\node[font=\tiny,text=black!55,align=center] at (11.10,4.55){debate\\ $T$ rounds};
-\node[diamond,aspect=1.4,draw=black!55,fill=black!4,line width=0.6pt,font=\tiny,align=center,inner sep=0.5pt] (cons) at (12.60,4.55){panel\\ agrees?};
-\node[box,fill=td!7,draw=td!55,minimum width=1.4cm,minimum height=0.52cm] (obj) at (12.60,2.9){\textbf{objections}};
+\node[font=\tiny,text=black!55,align=center] at (11.15,4.55){debate\\ $T$ rounds};
+\node[diamond,aspect=1.4,draw=black!55,fill=black!4,line width=0.6pt,font=\tiny,align=center,inner sep=0.5pt] (cons) at (12.65,4.55){both\\ agree?};
+\node[box,fill=td!7,draw=td!55,minimum width=1.4cm,minimum height=0.52cm] (obj) at (12.65,2.9){\textbf{objections}};
 \draw[arr,line width=0.9pt] (jr.east) -| (cons.north);
 \draw[arr,line width=0.9pt] (jp.east) -| (cons.south);
 \draw[rarr,line width=0.9pt] (cons.south) -- node[right,font=\tiny,text=td!70,pos=0.4]{no} (obj.north);
@@ -127,13 +125,10 @@
 % ===== inter-stage flow =====
 \draw[arr] (1.8,4.35) -- (2.3,4.35);
 \draw[arr] (5.1,3.6) -- (5.6,3.6);
-\draw[aarr] (7.8,4.55) -- (adv.west);
+\draw[arr] (7.8,4.55) -- node[above,font=\tiny,text=black!60,pos=0.45]{passes} (adv.west);
 \draw[garr] (cons.east) -- node[above,font=\tiny,text=tc!50!black]{yes~\checkmark} (db.west);
-% gate-cleared accept: bypasses the panel, straight to the corpus (enter cylinder from the right)
-\draw[garr] (6.7,2.42) -- (6.7,0.05) -- (15.75,0.05) -- (db.east);
-\node[font=\tiny,text=tc!50!black] at (10.5,0.24){gate-cleared accept (skips panel)};
 % refine loop: objections -> generator; discarded after R_max
-\draw[rarr] (obj.south) -- (12.60,-0.35) -- (3.7,-0.35) -- (gen.south);
+\draw[rarr] (obj.south) -- (12.65,-0.35) -- (3.7,-0.35) -- (gen.south);
 \node[font=\tiny,text=td!70] at (7.9,-0.15){objections $\rightarrow$ regenerate ($\le R_{\max}$), else drop};
 \end{tikzpicture}
 \end{document}

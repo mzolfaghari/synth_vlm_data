@@ -46,26 +46,24 @@ def process_image(image, rows, args):
         context = None
         if src is not None and args.pass_source:
             context = json.dumps(src, ensure_ascii=False)[:3500]
-        decision, reason = triage(q, a, snums, kept_qs)
+        # cheap sanity gates only DROP junk; every survivor is adjudicated by the panel
+        decision, reason = triage(q, a, kept_qs)
         stats[f"gate_{reason}"] += 1
         if decision == "drop":
             continue
-        if decision == "accept":
-            final_a, refined = a, False
-        else:  # adjudicate
-            if args.mode == "single":
-                v = single_verify(args.base_url, args.model, img_b64, q, a, context)
-            else:
-                v = adjudicate(args.base_url, args.model, img_b64, q, a, context, snums,
-                               rounds=args.rounds, r_max=args.rmax)
-            stats["panel_seen"] += 1
-            if not v["kept"]:
-                stats["panel_reject"] += 1
-                continue
-            stats["panel_accept"] += 1
-            if v.get("refined"):
-                stats["refined"] += 1
-            final_a, refined = v["answer"], v.get("refined", False)
+        if args.mode == "single":
+            v = single_verify(args.base_url, args.model, img_b64, q, a, context)
+        else:
+            v = adjudicate(args.base_url, args.model, img_b64, q, a, context, snums,
+                           rounds=args.rounds, r_max=args.rmax)
+        stats["panel_seen"] += 1
+        if not v["kept"]:
+            stats["panel_reject"] += 1
+            continue
+        stats["panel_accept"] += 1
+        if v.get("refined"):
+            stats["refined"] += 1
+        final_a = v["answer"]
         row = {"config": args.config, "image": path, "question": q, "answer": final_a}
         if r.get("tier"):
             row["tier"] = r["tier"]
