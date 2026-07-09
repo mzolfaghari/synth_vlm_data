@@ -43,13 +43,13 @@ converter to our manifest schema, and a SLURM runner that generates over **CoSyn
 
 ![FORGE pipeline](forge/docs/forge_pipeline.png)
 
-FORGE upgrades answer verification from a single model pass to an **adversarial panel**: cheap
-deterministic grounding gates run first (answer format, numeric ±5% vs. source, ROUGE-L dedup), and
-only the ambiguous residual goes to a rigid **Advocate** + a **lenient (recall)** and a **strict
-(precision)** judge that must reach **consensus**; on dissent it refines the answer and re-adjudicates.
-Step ② can weight skill sampling by a **model weakness profile** to oversample weak capabilities. The
-adversarial-debate idea is adapted from [arXiv:2604.25203](https://arxiv.org/abs/2604.25203),
-retargeted to VQA answer-correctness.
+FORGE upgrades answer verification from a single model pass to an **adversarial panel**. Cheap sanity
+gates run first but only **drop junk** (non-single-value answers, near-duplicates); **every** surviving
+pair is then verified by a rigid **Advocate** + a **lenient** judge (accepts if roughly right) and a
+**strict** judge (accepts only if exact) that must **both agree**; on disagreement it refines the
+answer and re-adjudicates, else drops. Step ② can weight skill sampling by a **model weakness profile**
+to oversample weak capabilities. The adversarial-debate idea is adapted from
+[arXiv:2604.25203](https://arxiv.org/abs/2604.25203), retargeted to VQA answer-correctness.
 
 - [`forge/README.md`](forge/README.md) — attribution, stages, and how to run
 - [`forge/debate.py`](forge/debate.py) — asymmetric debate + refinement; `single_verify()` baseline
